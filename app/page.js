@@ -83,6 +83,8 @@ export default function Home() {
         source: newLead.source,
         contact_type: newLead.contactType,
         contact_value: newLead.contactValue,
+        email: newLead.email || null,
+        social_media_link: newLead.socialMediaLink || null,
         notes: newLead.notes,
       })
       .select()
@@ -105,6 +107,9 @@ export default function Home() {
         stage: updated.stage,
         cold_email: updated.cold_email,
         follow_up_email: updated.follow_up_email,
+        email: updated.email ?? null,
+        social_media_link: updated.social_media_link ?? null,
+        contact_value: updated.contact_value,
       })
       .eq('id', updated.id)
       .select()
@@ -418,6 +423,8 @@ function AddLeadModal({ onClose, onAdd }) {
   const [source, setSource] = useState('google_maps');
   const [contactType, setContactType] = useState('phone');
   const [contactValue, setContactValue] = useState('');
+  const [email, setEmail] = useState('');
+  const [socialMediaLink, setSocialMediaLink] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState('');
@@ -427,7 +434,15 @@ function AddLeadModal({ onClose, onAdd }) {
     if (!businessName.trim()) return;
     setSaving(true);
     setLocalError('');
-    const result = await onAdd({ businessName: businessName.trim(), source, contactType, contactValue: contactValue.trim(), notes: notes.trim() });
+    const result = await onAdd({
+      businessName: businessName.trim(),
+      source,
+      contactType,
+      contactValue: contactValue.trim(),
+      email: email.trim(),
+      socialMediaLink: socialMediaLink.trim(),
+      notes: notes.trim(),
+    });
     if (!result?.ok) setLocalError(result?.message || 'Could not add this lead. Try again.');
     setSaving(false);
   }
@@ -469,6 +484,16 @@ function AddLeadModal({ onClose, onAdd }) {
               <input type="text" value={contactValue} onChange={(e) => setContactValue(e.target.value)} placeholder={contactType === 'email' ? 'name@business.com' : contactType === 'phone' ? '2348012345678' : '@theirhandle'} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10" />
             </div>
           </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-xs font-medium text-gray-600 block mb-1">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@business.com" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10" />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs font-medium text-gray-600 block mb-1">Social media link</label>
+              <input type="text" value={socialMediaLink} onChange={(e) => setSocialMediaLink(e.target.value)} placeholder="instagram.com/business" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10" />
+            </div>
+          </div>
           <div>
             <label className="text-xs font-medium text-gray-600 block mb-1">Notes</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What you noticed about them, why they're a good fit" rows={2} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 resize-none" />
@@ -485,6 +510,9 @@ function AddLeadModal({ onClose, onAdd }) {
 function LeadDetailModal({ lead, onClose, onUpdate, onDelete }) {
   const [notes, setNotes] = useState(lead.notes || '');
   const [nextFollowUp, setNextFollowUp] = useState(lead.next_follow_up || '');
+  const [contactValue, setContactValue] = useState(lead.contact_value || '');
+  const [email, setEmail] = useState(lead.email || '');
+  const [socialMediaLink, setSocialMediaLink] = useState(lead.social_media_link || '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState('');
@@ -496,14 +524,14 @@ function LeadDetailModal({ lead, onClose, onUpdate, onDelete }) {
 
   async function handleStageChange(newStage) {
     setLocalError('');
-    const result = await onUpdate({ ...lead, stage: newStage, notes, next_follow_up: nextFollowUp });
+    const result = await onUpdate({ ...lead, stage: newStage, notes, next_follow_up: nextFollowUp, contact_value: contactValue, email, social_media_link: socialMediaLink });
     if (!result?.ok) setLocalError(result?.message || 'Could not update the stage. Try again.');
   }
 
   async function handleSaveDetails() {
     setSaving(true);
     setLocalError('');
-    const result = await onUpdate({ ...lead, notes, next_follow_up: nextFollowUp });
+    const result = await onUpdate({ ...lead, notes, next_follow_up: nextFollowUp, contact_value: contactValue, email, social_media_link: socialMediaLink });
     if (!result?.ok) setLocalError(result?.message || 'Could not save. Try again.');
     setSaving(false);
   }
@@ -523,7 +551,7 @@ function LeadDetailModal({ lead, onClose, onUpdate, onDelete }) {
         setDrafting(false);
         return;
       }
-      const result = await onUpdate({ ...lead, notes, next_follow_up: nextFollowUp, cold_email: drafted.coldEmail, follow_up_email: drafted.followUp });
+      const result = await onUpdate({ ...lead, notes, next_follow_up: nextFollowUp, contact_value: contactValue, email, social_media_link: socialMediaLink, cold_email: drafted.coldEmail, follow_up_email: drafted.followUp });
       if (!result?.ok) setDraftError(result?.message || 'Drafted, but could not save it. Try again.');
     } catch (err) {
       console.error('Draft generation failed', err);
@@ -558,12 +586,26 @@ function LeadDetailModal({ lead, onClose, onUpdate, onDelete }) {
         </div>
         <p className="text-xs text-gray-400 mb-4">Added {new Date(lead.date_added).toLocaleDateString()}</p>
 
-        {lead.contact_value && (
-          <div className="flex items-center gap-1.5 text-sm text-gray-700 mb-4 bg-gray-50 rounded-lg px-3 py-2">
-            {lead.contact_type === 'email' ? <Mail size={14} /> : lead.contact_type === 'phone' ? <Phone size={14} /> : <Instagram size={14} />}
-            {lead.contact_value}
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1 flex items-center gap-1">
+              {lead.contact_type === 'phone' ? <Phone size={12} /> : lead.contact_type === 'email' ? <Mail size={12} /> : <Instagram size={12} />}
+              {lead.contact_type === 'phone' ? 'Phone' : lead.contact_type === 'email' ? 'Contact email' : 'Handle'}
+            </label>
+            <input type="text" value={contactValue} onChange={(e) => setContactValue(e.target.value)} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10" />
           </div>
-        )}
+          <div>
+            <label className="text-xs font-medium text-gray-600 block mb-1 flex items-center gap-1">
+              <Mail size={12} /> Email
+            </label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@business.com" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10" />
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="text-xs font-medium text-gray-600 block mb-1">Social media link</label>
+          <input type="text" value={socialMediaLink} onChange={(e) => setSocialMediaLink(e.target.value)} placeholder="instagram.com/business" className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10" />
+        </div>
 
         <div className="mb-4">
           <label className="text-xs font-medium text-gray-600 block mb-1.5">Stage</label>
