@@ -19,8 +19,8 @@ The email is introducing ReviewBusiness, a tool that helps small businesses coll
 
 Requirements:
 - Cold email: under 120 words, one clear, specific, low-pressure call to action, no corporate filler, sounds like one real person writing to another, not a template.
+- If the notes mention a specific real detail, especially something emotional or consequential like a bad review, a complaint, or a customer's own words, connect the product directly to the outcome that detail points to, not a description of how the product works mechanically. Do not explain the interface (QR codes, WhatsApp, dashboards) in a first cold email, that's a "how" question for later, once someone's actually curious. Lead with what changes for them, not what the tool does step by step.
 - Follow-up email: under 60 words, for if there's no reply after about 5 days, references the first email briefly, doesn't repeat the whole pitch.
-- If notes mention something specific and real about the business, reference it naturally, don't force it.
 - No subject line needed, just the two email bodies.
 - Sign off both as "Jamiu" (not a full name, not a company name).
 
