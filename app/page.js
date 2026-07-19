@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, X, Search, MapPin, Instagram, Facebook, Linkedin, Twitter, Mail, Phone, Trash2, Clock, Sparkles, Copy, Check, RefreshCw, LogOut } from 'lucide-react';
+import { Plus, X, Search, MapPin, Instagram, Facebook, Linkedin, Twitter, Mail, Phone, Trash2, Clock, Sparkles, Copy, Check, RefreshCw, LogOut, Star, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 const STAGES = [
@@ -40,6 +40,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showFindModal, setShowFindModal] = useState(false);
   const [activeLead, setActiveLead] = useState(null);
 
   useEffect(() => {
@@ -160,6 +161,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowFindModal(true)}
+              className="flex items-center justify-center gap-1.5 border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Search size={16} /> Find leads
+            </button>
+            <button
               onClick={() => setShowAddModal(true)}
               className="flex items-center justify-center gap-1.5 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
             >
@@ -255,9 +262,153 @@ export default function Home() {
       </div>
 
       {showAddModal && <AddLeadModal onClose={() => setShowAddModal(false)} onAdd={addLead} />}
+      {showFindModal && <FindLeadsModal onClose={() => setShowFindModal(false)} onAdd={addLead} />}
       {activeLead && (
         <LeadDetailModal lead={activeLead} onClose={() => setActiveLead(null)} onUpdate={updateLead} onDelete={deleteLead} />
       )}
+    </div>
+  );
+}
+
+function FindLeadsModal({ onClose, onAdd }) {
+  const [businessType, setBusinessType] = useState('');
+  const [city, setCity] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [results, setResults] = useState(null);
+  const [addedIds, setAddedIds] = useState(new Set());
+  const [addingId, setAddingId] = useState(null);
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    if (!businessType.trim() || !city.trim()) return;
+    setSearching(true);
+    setSearchError('');
+    setResults(null);
+    try {
+      const res = await fetch('/api/find-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessType: businessType.trim(), city: city.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSearchError(data.error || 'Search failed. Try again.');
+      } else {
+        setResults(data.results || []);
+      }
+    } catch (err) {
+      console.error('Find leads search failed', err);
+      setSearchError('Search failed. Try again.');
+    }
+    setSearching(false);
+  }
+
+  async function handleAdd(place) {
+    setAddingId(place.placeId);
+    const notes = place.reviews.length
+      ? place.reviews.map((r) => `${r.rating} stars: ${r.text}`).join(String.fromCharCode(10, 10))
+      : '';
+    const result = await onAdd({
+      businessName: place.name,
+      source: 'google_maps',
+      contactType: 'phone',
+      contactValue: place.phone,
+      notes,
+    });
+    if (result?.ok) setAddedIds((prev) => new Set(prev).add(place.placeId));
+    setAddingId(null);
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-white rounded-xl max-w-lg w-full p-5 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-900">Find leads</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+          <input
+            type="text"
+            required
+            placeholder="Business type, e.g. med spa"
+            value={businessType}
+            onChange={(e) => setBusinessType(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          />
+          <input
+            type="text"
+            required
+            placeholder="City"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          />
+          <button
+            type="submit"
+            disabled={searching}
+            className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {searching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+            Search
+          </button>
+        </form>
+
+        {searchError && <div className="bg-red-50 text-red-700 text-xs px-3 py-2 rounded-lg mb-3">{searchError}</div>}
+
+        {results && results.length === 0 && (
+          <p className="text-sm text-gray-500 text-center py-8">No results found. Try a broader search.</p>
+        )}
+
+        {results && results.length > 0 && (
+          <div className="space-y-3">
+            {results.map((place) => (
+              <div key={place.placeId} className="border border-gray-200 rounded-lg p-3">
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{place.name}</p>
+                    <p className="text-xs text-gray-500">{place.address}</p>
+                  </div>
+                  {place.rating != null && (
+                    <span className="shrink-0 flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 rounded-full px-2 py-1">
+                      <Star size={11} className="fill-amber-500 text-amber-500" /> {place.rating} ({place.reviewCount})
+                    </span>
+                  )}
+                </div>
+                {place.reviews.length > 0 && (
+                  <div className="space-y-1.5 mt-2 mb-2">
+                    {place.reviews.slice(0, 3).map((r, i) => (
+                      <p key={i} className={`text-xs rounded-lg px-2.5 py-2 ${r.rating <= 3 ? 'bg-red-50 text-red-900' : 'bg-gray-50 text-gray-600'}`}>
+                        {r.rating} stars: {r.text.slice(0, 160)}{r.text.length > 160 ? '...' : ''}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => handleAdd(place)}
+                  disabled={addingId === place.placeId || addedIds.has(place.placeId)}
+                  className="w-full text-sm font-medium py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  {addedIds.has(place.placeId) ? (
+                    <>
+                      <Check size={13} className="text-green-600" /> Added
+                    </>
+                  ) : addingId === place.placeId ? (
+                    'Adding...'
+                  ) : (
+                    <>
+                      <Plus size={13} /> Add to pipeline
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
