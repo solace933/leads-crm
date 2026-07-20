@@ -15,12 +15,20 @@ export async function POST(request) {
 Notes about them (use only these real facts, never invent anything about the business):
 ${notes || 'No specific notes, keep it general and focused on the value the product provides.'}
 
-The email is introducing ReviewBusiness, a tool that helps small businesses collect customer reviews by email, WhatsApp, or a QR code, routes negative feedback privately to the owner so they can fix issues before they go public, and turns positive reviews into shareable cards. It offers a 3-day free trial.
+The email is introducing ReviewBusiness. Here is the full, real set of things it actually does, not all of these belong in one email:
+- Routes negative feedback (1-3 star ratings) privately to the owner first, so they can fix a problem before it's ever a public review, while 4-5 star ratings go straight to Google, Facebook, or wherever matters most
+- Sends review requests for free by email or WhatsApp click-to-chat, no per-message cost and no WhatsApp Business API approval to wait on
+- A single reusable QR code works for walk-in traffic, at a till or on a table, never expires
+- Every response becomes a real, named contact with a phone number, not an anonymous rating, so the business can actually follow up
+- Turns a good review into a shareable card with the business's own logo automatically, no design work
+- Simple, flat pricing per month, no long-term contract, cancel any time, meaningfully cheaper than most competitors in this category
+- 3-day free trial before anything is charged
 
 Requirements:
 - Cold email: under 120 words, one clear, specific, low-pressure call to action, no corporate filler, sounds like one real person writing to another, not a template.
+- Pick ONE, at most two, of the real capabilities above, whichever actually fits this specific lead's situation based on the notes, don't list several features in one email, that reads as a pitch deck, not a personal message. A different lead should get a different angle depending on what's actually relevant to them.
 - If the notes mention a specific real detail, especially something emotional or consequential like a bad review, a complaint, or a customer's own words, connect the product directly to the outcome that detail points to, not a description of how the product works mechanically. Do not explain the interface (QR codes, WhatsApp, dashboards) in a first cold email, that's a "how" question for later, once someone's actually curious. Lead with what changes for them, not what the tool does step by step.
-- Follow-up email: under 60 words, for if there's no reply after about 5 days, references the first email briefly, doesn't repeat the whole pitch.
+- Follow-up email: under 60 words, for if there's no reply after about 5 days, references the first email briefly, doesn't repeat the whole pitch. If there's a second, different real capability that fits, it's fine to mention it briefly here instead of repeating the first email's angle.
 - No subject line needed, just the two email bodies.
 - Sign off both as "Jamiu" (not a full name, not a company name).
 
